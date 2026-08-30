@@ -1,0 +1,17 @@
+{
+  "id": "pi_3OInvoicePilotDemo",
+  "object": "payment_intent",
+  "amount": 248000,
+  "currency": "usd",
+  "status": "succeeded",
+  "livemode": false,
+  "latest_charge": {
+    "id": "ch_3OInvoicePilotDemo",
+    "object": "charge",
+    "amount": 248000,
+    "currency": "usd",
+    "paid": true,
+    "status": "succeeded",
+    "receipt_url": "https://pay.stripe.com/receipts/demo-invoicepilot"
+  }
+}

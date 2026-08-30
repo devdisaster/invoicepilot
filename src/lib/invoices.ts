@@ -28,12 +28,14 @@ export function getInvoice(id: string) {
   return invoice ? { ...invoice } : undefined;
 }
 
-export function markInvoicePaid(id: string, receiptUrl: string) {
+export function markInvoicePaid(id: string, receiptUrl?: string) {
   const invoice = invoices.find((item) => item.id === id);
   if (!invoice) {
     return undefined;
   }
   invoice.status = "paid";
-  invoice.receiptUrl = receiptUrl;
+  if (receiptUrl) {
+    invoice.receiptUrl = receiptUrl;
+  }
   return { ...invoice };
 }

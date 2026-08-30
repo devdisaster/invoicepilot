@@ -1,4 +1,5 @@
 const PAYMENT_INTENTS_ENDPOINT = "/v1/payment_intents";
+const RECEIPT_URL_PREFIX = "https://pay.stripe.com/receipts/";
 
 export type CollectPaymentInput = {
   amountCents: number;
@@ -116,29 +117,26 @@ function parsePaymentIntent(body: unknown, response: Response): CollectPaymentRe
     throw contractError("PaymentIntent response is missing required fields.", response, body);
   }
 
-  const charges = body.charges;
-  if (
-    !isRecord(charges) ||
-    charges.object !== "list" ||
-    !Array.isArray(charges.data) ||
-    charges.data.length === 0
-  ) {
-    throw contractError("PaymentIntent response is missing the expected charges list.", response, body);
+  const latestCharge = body.latest_charge;
+  if (isRecord(latestCharge)) {
+    if (typeof latestCharge.receipt_url !== "string") {
+      throw contractError("PaymentIntent charge is missing receipt details.", response, body);
+    }
+    return {
+      paymentIntentId: body.id,
+      status: body.status,
+      receiptUrl: latestCharge.receipt_url
+    };
   }
 
-  const charge = charges.data[0];
-  if (
-    !isRecord(charge) ||
-    typeof charge.receipt_url !== "string" ||
-    typeof charge.status !== "string"
-  ) {
-    throw contractError("PaymentIntent charge is missing receipt details.", response, body);
+  if (typeof latestCharge !== "string" || !latestCharge) {
+    throw contractError("PaymentIntent response is missing the latest charge.", response, body);
   }
 
   return {
     paymentIntentId: body.id,
     status: body.status,
-    receiptUrl: charge.receipt_url
+    receiptUrl: `${RECEIPT_URL_PREFIX}${latestCharge}`
   };
 }
 
@@ -154,7 +152,8 @@ export async function collectPayment(
     amount: String(input.amountCents),
     currency: input.currency.toLowerCase(),
     confirm: "true",
-    payment_method: "pm_card_visa"
+    payment_method: "pm_card_visa",
+    "expand[]": "latest_charge"
   });
   const response = await fetch(`${gatewayUrl.replace(/\/$/, "")}${PAYMENT_INTENTS_ENDPOINT}`, {
     method: "POST",

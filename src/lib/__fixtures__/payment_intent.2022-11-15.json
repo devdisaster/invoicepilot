@@ -1,0 +1,13 @@
+{
+  "id": "pi_3OInvoicePilotDemo",
+  "object": "payment_intent",
+  "amount": 248000,
+  "amount_capturable": 0,
+  "amount_received": 248000,
+  "currency": "usd",
+  "description": "InvoicePilot demo payment",
+  "livemode": false,
+  "payment_method": "pm_card_visa",
+  "status": "succeeded",
+  "latest_charge": "ch_3OInvoicePilotDemo"
+}

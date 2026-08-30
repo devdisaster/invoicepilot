@@ -8,7 +8,8 @@ export type CollectPaymentInput = {
 export type CollectPaymentResult = {
   paymentIntentId: string;
   status: string;
-  receiptUrl: string;
+  chargeId: string;
+  receiptUrl?: string;
 };
 
 export class StripeContractError extends Error {
@@ -116,30 +117,38 @@ function parsePaymentIntent(body: unknown, response: Response): CollectPaymentRe
     throw contractError("PaymentIntent response is missing required fields.", response, body);
   }
 
+  const latestCharge = body.latest_charge;
+  if (typeof latestCharge === "string" && latestCharge) {
+    return { paymentIntentId: body.id, status: body.status, chargeId: latestCharge };
+  }
+  if (isRecord(latestCharge) && typeof latestCharge.id === "string") {
+    return {
+      paymentIntentId: body.id,
+      status: body.status,
+      chargeId: latestCharge.id,
+      receiptUrl: typeof latestCharge.receipt_url === "string" ? latestCharge.receipt_url : undefined
+    };
+  }
+
   const charges = body.charges;
   if (
-    !isRecord(charges) ||
-    charges.object !== "list" ||
-    !Array.isArray(charges.data) ||
-    charges.data.length === 0
+    isRecord(charges) &&
+    charges.object === "list" &&
+    Array.isArray(charges.data) &&
+    charges.data.length > 0
   ) {
-    throw contractError("PaymentIntent response is missing the expected charges list.", response, body);
+    const charge = charges.data[0];
+    if (isRecord(charge) && typeof charge.id === "string") {
+      return {
+        paymentIntentId: body.id,
+        status: body.status,
+        chargeId: charge.id,
+        receiptUrl: typeof charge.receipt_url === "string" ? charge.receipt_url : undefined
+      };
+    }
   }
 
-  const charge = charges.data[0];
-  if (
-    !isRecord(charge) ||
-    typeof charge.receipt_url !== "string" ||
-    typeof charge.status !== "string"
-  ) {
-    throw contractError("PaymentIntent charge is missing receipt details.", response, body);
-  }
-
-  return {
-    paymentIntentId: body.id,
-    status: body.status,
-    receiptUrl: charge.receipt_url
-  };
+  throw contractError("PaymentIntent response is missing charge details.", response, body);
 }
 
 export async function collectPayment(

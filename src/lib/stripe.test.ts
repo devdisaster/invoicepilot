@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import fixture from "./__fixtures__/payment_intent.2022-08-01.json";
-import { collectPayment, StripeConfigError } from "./stripe";
+import latestChargeFixture from "./__fixtures__/payment_intent.2022-11-15.json";
+import { collectPayment, StripeConfigError, StripeContractError } from "./stripe";
 
 describe("collectPayment", () => {
   beforeEach(() => {
@@ -25,6 +26,7 @@ describe("collectPayment", () => {
     expect(result).toEqual({
       paymentIntentId: "pi_3OInvoicePilotDemo",
       status: "succeeded",
+      chargeId: "ch_3OInvoicePilotDemo",
       receiptUrl: "https://pay.stripe.com/receipts/demo-invoicepilot"
     });
     expect(fetchMock).toHaveBeenCalledWith(
@@ -34,6 +36,63 @@ describe("collectPayment", () => {
         body: "amount=248000&currency=usd&confirm=true&payment_method=pm_card_visa"
       })
     );
+  });
+
+  it("parses the 2022-11-15 PaymentIntent shape without charges", async () => {
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(JSON.stringify(latestChargeFixture), {
+        status: 200,
+        headers: { "Stripe-Version": "2022-11-15" }
+      })
+    );
+
+    const result = await collectPayment({ amountCents: 248000, currency: "usd" });
+
+    expect(result).toEqual({
+      paymentIntentId: "pi_3OInvoicePilotDemo",
+      status: "succeeded",
+      chargeId: "ch_3OInvoicePilotDemo"
+    });
+  });
+
+  it("reads the receipt url when latest_charge is expanded", async () => {
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          ...latestChargeFixture,
+          latest_charge: {
+            id: "ch_3OInvoicePilotDemo",
+            object: "charge",
+            status: "succeeded",
+            receipt_url: "https://pay.stripe.com/receipts/demo-invoicepilot"
+          }
+        }),
+        { status: 200, headers: { "Stripe-Version": "2022-11-15" } }
+      )
+    );
+
+    const result = await collectPayment({ amountCents: 248000, currency: "usd" });
+
+    expect(result).toEqual({
+      paymentIntentId: "pi_3OInvoicePilotDemo",
+      status: "succeeded",
+      chargeId: "ch_3OInvoicePilotDemo",
+      receiptUrl: "https://pay.stripe.com/receipts/demo-invoicepilot"
+    });
+  });
+
+  it("raises a contract error when no charge reference is present", async () => {
+    const { latest_charge: _latestCharge, ...withoutCharge } = latestChargeFixture;
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(JSON.stringify(withoutCharge), {
+        status: 200,
+        headers: { "Stripe-Version": "2022-11-15" }
+      })
+    );
+
+    await expect(
+      collectPayment({ amountCents: 248000, currency: "usd" })
+    ).rejects.toBeInstanceOf(StripeContractError);
   });
 
   it("raises a configuration error when the gateway is unset", async () => {

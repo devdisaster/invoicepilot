@@ -1,2 +1,3 @@
-# invoicepilot
-InvoicePilot — demo billing SaaS (Devin repair target)
+# InvoicePilot
+
+Demo billing SaaS.

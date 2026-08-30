@@ -1,0 +1,17 @@
+{
+  "id": "pi_3UA7YTDCdk9hAd8r1dXRQrOB",
+  "object": "payment_intent",
+  "amount": 248000,
+  "amount_capturable": 0,
+  "amount_received": 248000,
+  "currency": "usd",
+  "status": "succeeded",
+  "created": 1788091785,
+  "livemode": false,
+  "capture_method": "automatic",
+  "confirmation_method": "automatic",
+  "payment_method_types": ["card"],
+  "canceled_at": null,
+  "cancellation_reason": null,
+  "latest_charge": "ch_3UA7YTDCdk9hAd8r167hRCFO"
+}

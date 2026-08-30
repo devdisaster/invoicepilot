@@ -111,34 +111,41 @@ async function reportContractError(error: StripeContractError) {
   }
 }
 
+const RECEIPT_BASE_URL = "https://pay.stripe.com/receipts";
+
+function readReceiptUrl(body: JsonRecord): string | undefined {
+  const latestCharge = body.latest_charge;
+  if (isRecord(latestCharge) && typeof latestCharge.receipt_url === "string") {
+    return latestCharge.receipt_url;
+  }
+  if (typeof latestCharge === "string" && latestCharge) {
+    return `${RECEIPT_BASE_URL}/${latestCharge}`;
+  }
+
+  const charges = body.charges;
+  if (isRecord(charges) && Array.isArray(charges.data)) {
+    const charge = charges.data[0];
+    if (isRecord(charge) && typeof charge.receipt_url === "string") {
+      return charge.receipt_url;
+    }
+  }
+  return undefined;
+}
+
 function parsePaymentIntent(body: unknown, response: Response): CollectPaymentResult {
   if (!isRecord(body) || typeof body.id !== "string" || typeof body.status !== "string") {
     throw contractError("PaymentIntent response is missing required fields.", response, body);
   }
 
-  const charges = body.charges;
-  if (
-    !isRecord(charges) ||
-    charges.object !== "list" ||
-    !Array.isArray(charges.data) ||
-    charges.data.length === 0
-  ) {
-    throw contractError("PaymentIntent response is missing the expected charges list.", response, body);
-  }
-
-  const charge = charges.data[0];
-  if (
-    !isRecord(charge) ||
-    typeof charge.receipt_url !== "string" ||
-    typeof charge.status !== "string"
-  ) {
-    throw contractError("PaymentIntent charge is missing receipt details.", response, body);
+  const receiptUrl = readReceiptUrl(body);
+  if (!receiptUrl) {
+    throw contractError("PaymentIntent response is missing charge receipt details.", response, body);
   }
 
   return {
     paymentIntentId: body.id,
     status: body.status,
-    receiptUrl: charge.receipt_url
+    receiptUrl
   };
 }
 

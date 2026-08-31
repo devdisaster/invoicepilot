@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import fixture from "./__fixtures__/chat_completion.2024-08-06.json";
+import fixture from "./__fixtures__/chat_completion.2026-06-12.json";
 import { extractInvoiceFields, OpenAIConfigError, OpenAIContractError } from "./openai";
 
 const PASTED_EMAIL =
@@ -25,11 +25,11 @@ describe("extractInvoiceFields", () => {
     delete process.env.SENTINEL_INTEGRATION_ID;
   });
 
-  it("parses the 2024-08-06 chat.completion shape", async () => {
+  it("parses the 2026-06-12 chat.completion shape", async () => {
     const fetchMock = vi.spyOn(globalThis, "fetch").mockResolvedValue(
       new Response(JSON.stringify(fixture), {
         status: 200,
-        headers: { "X-Contract-Version": "2024-08-06" }
+        headers: { "X-Contract-Version": "2026-06-12" }
       })
     );
 
@@ -66,7 +66,7 @@ describe("extractInvoiceFields", () => {
     const fetchMock = vi.spyOn(globalThis, "fetch").mockResolvedValue(
       new Response(JSON.stringify(UNSUPPORTED_PARAMETER), {
         status: 400,
-        headers: { "X-Contract-Version": "2024-09-12" }
+        headers: { "X-Contract-Version": "2026-08-28" }
       })
     );
 
@@ -78,7 +78,7 @@ describe("extractInvoiceFields", () => {
     expect(failure).toMatchObject({
       endpoint: "/v1/chat/completions",
       statusCode: 400,
-      observedContractVersion: "2024-09-12"
+      observedContractVersion: "2026-08-28"
     });
     expect((failure as OpenAIContractError).message).toContain("max_completion_tokens");
     expect(fetchMock).toHaveBeenCalledWith(

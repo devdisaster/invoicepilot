@@ -175,7 +175,7 @@ export async function extractInvoiceFields(
       { role: "system", content: EXTRACTION_SYSTEM_PROMPT },
       { role: "user", content: input.text }
     ],
-    max_tokens: 256,
+    max_completion_tokens: 256,
     temperature: 0
   });
   const response = await fetch(`${gatewayUrl.replace(/\/$/, "")}${CHAT_COMPLETIONS_ENDPOINT}`, {

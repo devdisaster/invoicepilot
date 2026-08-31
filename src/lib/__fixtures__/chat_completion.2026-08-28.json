@@ -1,0 +1,27 @@
+{
+  "id": "chatcmpl-3OInvoicePilotDemo",
+  "object": "chat.completion",
+  "created": 1756339200,
+  "model": "gpt-4o-mini-2024-07-18",
+  "system_fingerprint": "fp_invoicepilot_demo",
+  "choices": [
+    {
+      "index": 0,
+      "message": {
+        "role": "assistant",
+        "content": "{\"customer\":\"Northstar Labs\",\"amountCents\":248000,\"currency\":\"usd\",\"dueDate\":\"2026-09-30\"}",
+        "refusal": null
+      },
+      "logprobs": null,
+      "finish_reason": "stop"
+    }
+  ],
+  "usage": {
+    "prompt_tokens": 214,
+    "completion_tokens": 34,
+    "total_tokens": 248,
+    "completion_tokens_details": {
+      "reasoning_tokens": 0
+    }
+  }
+}
